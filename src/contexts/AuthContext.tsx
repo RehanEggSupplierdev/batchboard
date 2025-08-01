@@ -86,8 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (studentId: string, password: string) => {
     try {
       // Validate student ID format (11 digits)
-      if (!/^[0-9]{11}$/.test(studentId)) {
-        return { error: 'Student ID must be exactly 11 digits' };
+      if (!/^[0-9A-Za-z]{5,15}$/.test(studentId)) {
+        return { error: 'Student ID must be 5-15 characters (letters and numbers)' };
       }
 
       // Use email-based auth with student ID as email
@@ -116,13 +116,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (studentId: string, fullName: string, password: string) => {
     try {
       // Validate student ID format (11 digits)
-      if (!/^[0-9]{11}$/.test(studentId)) {
-        return { error: 'Student ID must be exactly 11 digits' };
+      if (!/^[0-9A-Za-z]{5,15}$/.test(studentId)) {
+        return { error: 'Student ID must be 5-15 characters (letters and numbers)' };
       }
 
       // Validate name format (only first name, uppercase)
-      if (!/^[A-Z]+$/.test(fullName.trim())) {
-        return { error: 'Name should be in uppercase letters only (e.g., AFTAB)' };
+      if (!/^[A-Za-z\s]+$/.test(fullName.trim())) {
+        return { error: 'Name should contain only letters and spaces' };
       }
 
       const email = `${studentId}@batchboard.local`;
@@ -141,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: profileError } = await createProfile({
           user_id: data.user.id,
           student_id: studentId,
-          full_name: fullName.trim().toUpperCase(),
+          full_name: fullName.trim(),
           bio: '',
           skills: [],
           social_links: {},

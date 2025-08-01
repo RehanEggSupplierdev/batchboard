@@ -177,13 +177,13 @@ export type Database = {
 // Helper functions for common operations
 export const createProfile = async (profileData: Database['public']['Tables']['profiles']['Insert']) => {
   // Validate student ID format
-  if (profileData.student_id && !/^[0-9]{11}$/.test(profileData.student_id)) {
-    return { data: null, error: { message: 'Student ID must be exactly 11 digits' } };
+  if (profileData.student_id && !/^[0-9A-Za-z]{5,15}$/.test(profileData.student_id)) {
+    return { data: null, error: { message: 'Student ID must be 5-15 characters (letters and numbers)' } };
   }
 
   // Validate and format name
   if (profileData.full_name) {
-    profileData.full_name = profileData.full_name.trim().toUpperCase();
+    profileData.full_name = profileData.full_name.trim();
   }
 
   const { data, error } = await supabase
@@ -198,7 +198,7 @@ export const createProfile = async (profileData: Database['public']['Tables']['p
 export const updateProfile = async (userId: string, updates: Database['public']['Tables']['profiles']['Update']) => {
   // Validate and format name if provided
   if (updates.full_name) {
-    updates.full_name = updates.full_name.trim().toUpperCase();
+    updates.full_name = updates.full_name.trim();
   }
 
   const { data, error } = await supabase

@@ -126,8 +126,8 @@ const HomePage: React.FC = () => {
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl mb-6 shadow-lg">
                 <Camera className="w-8 h-8 text-orange-600" />
               </div>
-              <h3 className="text-4xl font-bold text-gray-900 mb-2">Final</h3>
-              <p className="text-gray-600 font-medium">Last SOSE Batch</p>
+              <h3 className="text-4xl font-bold text-gray-900 mb-2">Class</h3>
+              <p className="text-gray-600 font-medium">10th Standard</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ const HomePage: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Featured Classmates
+              <p className="text-lg text-gray-600">SOSE Lajpat Nagar Class 10th - Batch 2024-2028</p>
               </h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Get to know some of our amazing Class 10th students and their incredible talents

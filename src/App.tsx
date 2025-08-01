@@ -13,6 +13,7 @@ import EditProfilePage from './pages/EditProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import PagesManagementPage from './pages/PagesManagementPage';
 import PageEditorPage from './pages/PageEditorPage';
+import PageViewerPage from './pages/PageViewerPage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/dashboard/pages" element={<PagesManagementPage />} />
           <Route path="/dashboard/pages/new" element={<PageEditorPage />} />
           <Route path="/dashboard/pages/edit/:pageId" element={<PageEditorPage />} />
+          <Route path="/students/:studentId/pages/:pageId" element={<PageViewerPage />} />
           
           {/* Placeholder routes - will be implemented in next phase */}
           <Route path="/dashboard/media" element={<div>Media Library - Coming Soon</div>} />

@@ -80,13 +80,13 @@ const LoginPage: React.FC = () => {
               <Input
                 label="Student ID"
                 type="text"
-                placeholder="Enter your 11-digit student ID (e.g., 20240253378)"
+                placeholder="Enter your student ID (e.g., DEMO001, aftab)"
                 error={errors.studentId?.message}
                 {...register('studentId', {
                   required: 'Student ID is required',
                   pattern: {
-                    value: /^[0-9]{11}$/,
-                    message: 'Student ID must be exactly 11 digits',
+                    value: /^[0-9A-Za-z]{5,15}$/,
+                    message: 'Student ID must be 5-15 characters (letters and numbers)',
                   },
                 })}
               />
@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
                 type="password"
                 placeholder="Enter your password"
                 error={errors.password?.message}
-                helperText="First time? Use your first name as password (e.g., 'AFTAB')"
+                helperText="First time? Try 'password' or your name"
                 {...register('password', {
                   required: 'Password is required',
                   minLength: {
@@ -120,8 +120,8 @@ const LoginPage: React.FC = () => {
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="text-sm font-medium text-blue-800 mb-2">First Time Login?</h3>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Use your 11-digit Student ID (e.g., 20240253378)</li>
-                <li>• Use your FIRST NAME as the initial password (e.g., AFTAB)</li>
+                <li>• Use your Student ID (e.g., DEMO001, aftab, or john123)</li>
+                <li>• Try 'password' or your name as the initial password</li>
                 <li>• You'll be prompted to change your password after first login</li>
               </ul>
             </div>
