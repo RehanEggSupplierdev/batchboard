@@ -176,6 +176,16 @@ export type Database = {
 
 // Helper functions for common operations
 export const createProfile = async (profileData: Database['public']['Tables']['profiles']['Insert']) => {
+  // Validate student ID format
+  if (profileData.student_id && !/^[0-9]{11}$/.test(profileData.student_id)) {
+    return { data: null, error: { message: 'Student ID must be exactly 11 digits' } };
+  }
+
+  // Validate and format name
+  if (profileData.full_name) {
+    profileData.full_name = profileData.full_name.trim().toUpperCase();
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .insert(profileData)
@@ -186,6 +196,11 @@ export const createProfile = async (profileData: Database['public']['Tables']['p
 };
 
 export const updateProfile = async (userId: string, updates: Database['public']['Tables']['profiles']['Update']) => {
+  // Validate and format name if provided
+  if (updates.full_name) {
+    updates.full_name = updates.full_name.trim().toUpperCase();
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)

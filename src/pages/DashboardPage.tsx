@@ -134,10 +134,10 @@ const DashboardPage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {profile?.full_name || 'Student'}! 👋
+            Welcome back, {profile?.full_name || 'Student'}! 🎓
           </h1>
           <p className="text-gray-600">
-            Manage your profile, create pages, and showcase your amazing work.
+            Manage your profile, create pages, and showcase your amazing work. Class 10th - Batch 2024-2028!
           </p>
         </div>
 

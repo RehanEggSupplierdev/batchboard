@@ -115,7 +115,7 @@ const StudentsPage: React.FC = () => {
             Meet Our Class
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Get to know the incredible individuals that make up the SOSE Lajpat Nagar Class of 2025. 
+            Get to know the incredible individuals that make up the SOSE Lajpat Nagar Class 10th (Batch 2024-2028). 
             Each profile tells a unique story of talent, passion, and ambition.
           </p>
         </div>

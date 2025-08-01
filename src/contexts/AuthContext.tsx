@@ -85,8 +85,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (studentId: string, password: string) => {
     try {
-      // For demo purposes, we'll use email-based auth with student ID as email
-      const email = `${studentId.toLowerCase()}@batchboard.local`;
+      // Validate student ID format (11 digits)
+      if (!/^[0-9]{11}$/.test(studentId)) {
+        return { error: 'Student ID must be exactly 11 digits' };
+      }
+
+      // Use email-based auth with student ID as email
+      const email = `${studentId}@batchboard.local`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -110,7 +115,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (studentId: string, fullName: string, password: string) => {
     try {
-      const email = `${studentId.toLowerCase()}@batchboard.local`;
+      // Validate student ID format (11 digits)
+      if (!/^[0-9]{11}$/.test(studentId)) {
+        return { error: 'Student ID must be exactly 11 digits' };
+      }
+
+      // Validate name format (only first name, uppercase)
+      if (!/^[A-Z]+$/.test(fullName.trim())) {
+        return { error: 'Name should be in uppercase letters only (e.g., AFTAB)' };
+      }
+
+      const email = `${studentId}@batchboard.local`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -126,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: profileError } = await createProfile({
           user_id: data.user.id,
           student_id: studentId,
-          full_name: fullName,
+          full_name: fullName.trim().toUpperCase(),
           bio: '',
           skills: [],
           social_links: {},
@@ -169,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase
           .from('profiles')
           .update({ first_login: false })
-          .eq('user_id', user?.id);
+          .eq('user_id', user.id);
         
         await refreshProfile();
       }

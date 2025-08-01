@@ -13,7 +13,10 @@ import { supabase, uploadFile } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 const schema = yup.object({
-  full_name: yup.string().required('Full name is required').max(100, 'Name too long'),
+  full_name: yup.string()
+    .required('Name is required')
+    .matches(/^[A-Z\s]+$/, 'Name should be in uppercase letters only (e.g., AFTAB)')
+    .max(50, 'Name too long'),
   bio: yup.string().max(500, 'Bio must be less than 500 characters'),
   quote: yup.string().max(200, 'Quote must be less than 200 characters'),
   skills: yup.array().of(
@@ -271,8 +274,10 @@ const EditProfilePage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
             <div className="space-y-4">
               <Input
-                label="Full Name"
+                label="Name (First Name Only)"
+                placeholder="e.g., AFTAB"
                 error={errors.full_name?.message}
+                helperText="Use uppercase letters only for your first name"
                 {...register('full_name')}
               />
 
