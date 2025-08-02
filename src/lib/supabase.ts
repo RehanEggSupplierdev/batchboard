@@ -177,13 +177,22 @@ export type Database = {
 // Helper functions for common operations
 export const createProfile = async (profileData: Database['public']['Tables']['profiles']['Insert']) => {
   // Validate student ID format (more flexible)
-  if (profileData.student_id && !/^[A-Za-z0-9]{3,20}$/.test(profileData.student_id)) {
+  if (profileData.student_id && !/^[A-Za-z0-9]{3,20}$/.test(profileData.student_id.trim())) {
     return { data: null, error: { message: 'Student ID must be 3-20 characters (letters and numbers only)' } };
   }
 
   // Validate and format name
   if (profileData.full_name) {
-    profileData.full_name = profileData.full_name.trim();
+    const trimmedName = profileData.full_name.trim();
+    if (trimmedName.length < 2) {
+      return { data: null, error: { message: 'Name must be at least 2 characters long' } };
+    }
+    profileData.full_name = trimmedName;
+  }
+
+  // Ensure student_id is trimmed
+  if (profileData.student_id) {
+    profileData.student_id = profileData.student_id.trim();
   }
 
   const { data, error } = await supabase

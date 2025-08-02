@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName: string, studentId: string) => {
     try {
       // Validate inputs
-      if (!email || !password || !fullName || !studentId) {
+      if (!email?.trim() || !password || !fullName?.trim() || !studentId?.trim()) {
         return { error: 'All fields are required' };
       }
 
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: 'Password must be at least 6 characters long' };
       }
 
-      if (!/^[A-Za-z0-9]{3,20}$/.test(studentId)) {
+      if (!/^[A-Za-z0-9]{3,20}$/.test(studentId.trim())) {
         return { error: 'Student ID must be 3-20 characters (letters and numbers only)' };
       }
 
@@ -131,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('student_id')
-        .eq('student_id', studentId)
+        .eq('student_id', studentId.trim())
         .single();
 
       if (existingProfile) {
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Create profile immediately
         const { error: profileError } = await createProfile({
           user_id: data.user.id,
-          student_id: studentId,
+          student_id: studentId.trim(),
           full_name: fullName.trim(),
           bio: '',
           skills: [],

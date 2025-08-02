@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { LogIn, Users, AlertCircle, UserPlus } from 'lucide-react';
 import Layout from '../components/Layout/Layout';
 import Card from '../components/UI/Card';
@@ -28,32 +27,123 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const {
-    register: registerLogin,
-    handleSubmit: handleLoginSubmit,
-    formState: { errors: loginErrors },
-  } = useForm<LoginForm>();
+  // Login form state
+  const [loginForm, setLoginForm] = useState<LoginForm>({
+    email: '',
+    password: ''
+  });
 
-  const {
-    register: registerSignUp,
-    handleSubmit: handleSignUpSubmit,
-    watch,
-    formState: { errors: signUpErrors },
-  } = useForm<SignUpForm>();
-
-  const watchPassword = watch('password');
+  // Signup form state
+  const [signUpForm, setSignUpForm] = useState<SignUpForm>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+    studentId: ''
+  });
 
   // Redirect if already logged in
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const onLoginSubmit = async (data: LoginForm) => {
+  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLoginForm(prev => ({ ...prev, [name]: value }));
+    setError(''); // Clear error when user types
+  };
+
+  const handleSignUpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSignUpForm(prev => ({ ...prev, [name]: value }));
+    setError(''); // Clear error when user types
+  };
+
+  const validateLoginForm = () => {
+    if (!loginForm.email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+    if (!loginForm.password) {
+      setError('Password is required');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginForm.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    return true;
+  };
+
+  const validateSignUpForm = () => {
+    if (!signUpForm.fullName.trim()) {
+      setError('Full name is required');
+      return false;
+    }
+    if (!signUpForm.studentId.trim()) {
+      setError('Student ID is required');
+      return false;
+    }
+    if (!signUpForm.email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+    if (!signUpForm.password) {
+      setError('Password is required');
+      return false;
+    }
+    if (!signUpForm.confirmPassword) {
+      setError('Please confirm your password');
+      return false;
+    }
+
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpForm.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+
+    // Validate full name
+    if (signUpForm.fullName.trim().length < 2) {
+      setError('Full name must be at least 2 characters');
+      return false;
+    }
+
+    // Validate student ID
+    if (signUpForm.studentId.length < 3 || signUpForm.studentId.length > 20) {
+      setError('Student ID must be 3-20 characters');
+      return false;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(signUpForm.studentId)) {
+      setError('Student ID can only contain letters and numbers');
+      return false;
+    }
+
+    // Validate password
+    if (signUpForm.password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
+
+    // Check password match
+    if (signUpForm.password !== signUpForm.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    return true;
+  };
+
+  const onLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateLoginForm()) return;
+
     setLoading(true);
     setError('');
 
     try {
-      const result = await signIn(data.email, data.password);
+      const result = await signIn(loginForm.email.trim(), loginForm.password);
       
       if (result.error) {
         setError(result.error);
@@ -67,18 +157,21 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const onSignUpSubmit = async (data: SignUpForm) => {
+  const onSignUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateSignUpForm()) return;
+
     setLoading(true);
     setError('');
 
-    if (data.password !== data.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const result = await signUp(data.email, data.password, data.fullName, data.studentId);
+      const result = await signUp(
+        signUpForm.email.trim(), 
+        signUpForm.password, 
+        signUpForm.fullName.trim(), 
+        signUpForm.studentId.trim()
+      );
       
       if (result.error) {
         setError(result.error);
@@ -90,6 +183,24 @@ const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fillDemoData = () => {
+    if (isSignUp) {
+      setSignUpForm({
+        email: 'demo@example.com',
+        password: 'password',
+        confirmPassword: 'password',
+        fullName: 'Demo User',
+        studentId: 'DEMO001'
+      });
+    } else {
+      setLoginForm({
+        email: 'demo@example.com',
+        password: 'password'
+      });
+    }
+    setError('');
   };
 
   return (
@@ -126,34 +237,36 @@ const LoginPage: React.FC = () => {
 
             {!isSignUp ? (
               // Login Form
-              <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-6">
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your email (e.g., john@example.com)"
-                  error={loginErrors.email?.message}
-                  {...registerLogin('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Please enter a valid email address',
-                    },
-                  })}
-                />
+              <form onSubmit={onLoginSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={loginForm.email}
+                    onChange={handleLoginChange}
+                    placeholder="Enter your email"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
 
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="Enter your password"
-                  error={loginErrors.password?.message}
-                  {...registerLogin('password', {
-                    required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters',
-                    },
-                  })}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={loginForm.password}
+                    onChange={handleLoginChange}
+                    placeholder="Enter your password"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
 
                 <Button
                   type="submit"
@@ -167,75 +280,80 @@ const LoginPage: React.FC = () => {
               </form>
             ) : (
               // Sign Up Form
-              <form onSubmit={handleSignUpSubmit(onSignUpSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 gap-4">
-                  <Input
-                    label="Full Name"
+              <form onSubmit={onSignUpSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
                     type="text"
-                    placeholder="Enter your full name (e.g., John Doe)"
-                    error={signUpErrors.fullName?.message}
-                    {...registerSignUp('fullName', {
-                      required: 'Full name is required',
-                      pattern: {
-                        value: /^[A-Za-z\s]{2,50}$/,
-                        message: 'Name must be 2-50 characters (letters and spaces only)',
-                      },
-                    })}
+                    name="fullName"
+                    value={signUpForm.fullName}
+                    onChange={handleSignUpChange}
+                    placeholder="Enter your full name"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
+                </div>
 
-                  <Input
-                    label="Student ID"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Student ID
+                  </label>
+                  <input
                     type="text"
-                    placeholder="Choose a unique ID (e.g., john123, student001)"
-                    error={signUpErrors.studentId?.message}
-                    helperText="3-20 characters, letters and numbers only"
-                    {...registerSignUp('studentId', {
-                      required: 'Student ID is required',
-                      pattern: {
-                        value: /^[A-Za-z0-9]{3,20}$/,
-                        message: 'Student ID must be 3-20 characters (letters and numbers only)',
-                      },
-                    })}
+                    name="studentId"
+                    value={signUpForm.studentId}
+                    onChange={handleSignUpChange}
+                    placeholder="Choose a unique ID (e.g., john123)"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
+                  <p className="text-xs text-gray-500 mt-1">3-20 characters, letters and numbers only</p>
+                </div>
 
-                  <Input
-                    label="Email Address"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
                     type="email"
+                    name="email"
+                    value={signUpForm.email}
+                    onChange={handleSignUpChange}
                     placeholder="Enter your email address"
-                    error={signUpErrors.email?.message}
-                    {...registerSignUp('email', {
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Please enter a valid email address',
-                      },
-                    })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
+                </div>
 
-                  <Input
-                    label="Password"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <input
                     type="password"
+                    name="password"
+                    value={signUpForm.password}
+                    onChange={handleSignUpChange}
                     placeholder="Create a password (min 6 characters)"
-                    error={signUpErrors.password?.message}
-                    {...registerSignUp('password', {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 6,
-                        message: 'Password must be at least 6 characters',
-                      },
-                    })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
+                </div>
 
-                  <Input
-                    label="Confirm Password"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
                     type="password"
+                    name="confirmPassword"
+                    value={signUpForm.confirmPassword}
+                    onChange={handleSignUpChange}
                     placeholder="Confirm your password"
-                    error={signUpErrors.confirmPassword?.message}
-                    {...registerSignUp('confirmPassword', {
-                      required: 'Please confirm your password',
-                      validate: (value) =>
-                        value === watchPassword || 'Passwords do not match',
-                    })}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
                   />
                 </div>
 
@@ -263,7 +381,7 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 space-y-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -271,44 +389,35 @@ const LoginPage: React.FC = () => {
                   onClick={() => {
                     setIsSignUp(!isSignUp);
                     setError('');
+                    setLoginForm({ email: '', password: '' });
+                    setSignUpForm({ email: '', password: '', confirmPassword: '', fullName: '', studentId: '' });
                   }}
                 >
                   {isSignUp ? 'Sign In Instead' : 'Create New Account'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-sm"
+                  onClick={fillDemoData}
+                >
+                  Fill Demo Data
                 </Button>
               </div>
             </div>
           </Card>
 
-          {!isSignUp && (
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Not a student?{' '}
-                <Link to="/students" className="text-blue-600 hover:text-blue-500">
-                  Browse public profiles
-                </Link>
-              </p>
-            </div>
-          )}
-
           {/* Demo Info */}
           <Card className="p-4 bg-blue-50 border-blue-200">
             <h3 className="text-sm font-medium text-blue-800 mb-2">
-              {isSignUp ? 'Getting Started' : 'Demo Accounts'}
+              Quick Start
             </h3>
-            {isSignUp ? (
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Choose a unique Student ID (like john123 or student001)</li>
-                <li>• Use your real email address</li>
-                <li>• Create a secure password (minimum 6 characters)</li>
-                <li>• Complete your profile after signing up</li>
-              </ul>
-            ) : (
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Email: demo@example.com, Password: password</li>
-                <li>• Email: admin@example.com, Password: password</li>
-                <li>• Or create your own account using "Create New Account"</li>
-              </ul>
-            )}
+            <div className="text-sm text-blue-700 space-y-1">
+              <p>• Click "Fill Demo Data" to auto-fill the form</p>
+              <p>• Or use: demo@example.com / password</p>
+              <p>• Create your own account with any email</p>
+            </div>
           </Card>
         </div>
       </div>
