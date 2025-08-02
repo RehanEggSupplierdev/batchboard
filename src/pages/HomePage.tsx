@@ -73,13 +73,13 @@ const HomePage: React.FC = () => {
                 Welcome to <span className="text-teal-300">BatchBoard</span>
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
-                The digital home for SOSE Lajpat Nagar Class 10th - Batch 2024-2028
+                Your Digital Class Community Platform
               </p>
             </div>
             
             <p className="text-base sm:text-lg text-blue-100 max-w-2xl mx-auto leading-relaxed">
               Connect with classmates, showcase your projects, and create lasting memories 
-              in our exclusive class portal. The last batch of SOSE Lajpat Nagar - make it memorable!
+              in your exclusive class portal. Build your digital presence and stay connected!
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">

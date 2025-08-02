@@ -8,8 +8,8 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signIn: (studentId: string, password: string) => Promise<{ error?: string }>;
-  signUp: (studentId: string, fullName: string, password: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string, fullName: string, studentId: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<{ error?: string }>;
   refreshProfile: () => Promise<void>;
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!error && data) {
         setProfile(data);
-        setIsAdmin(data.student_id === 'ADMIN001' || data.student_id === 'aftab' || data.student_id === 'DEMO001');
+        setIsAdmin(data.student_id === 'ADMIN001' || data.student_id === 'admin' || data.student_id === 'DEMO001');
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -83,22 +83,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (studentId: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      // Validate student ID format (11 digits)
-      if (!/^[0-9A-Za-z]{5,15}$/.test(studentId)) {
-        return { error: 'Student ID must be 5-15 characters (letters and numbers)' };
-      }
-
-      // Use email-based auth with student ID as email
-      const email = `${studentId}@batchboard.local`;
-      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.toLowerCase().trim(),
         password,
       });
 
       if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          return { error: 'Invalid email or password. Please check your credentials and try again.' };
+        }
         return { error: error.message };
       }
 
@@ -109,35 +104,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return {};
     } catch (error) {
-      return { error: 'An unexpected error occurred' };
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 
-  const signUp = async (studentId: string, fullName: string, password: string) => {
+  const signUp = async (email: string, password: string, fullName: string, studentId: string) => {
     try {
-      // Validate student ID format (11 digits)
-      if (!/^[0-9A-Za-z]{5,15}$/.test(studentId)) {
-        return { error: 'Student ID must be 5-15 characters (letters and numbers)' };
+      // Validate inputs
+      if (!email || !password || !fullName || !studentId) {
+        return { error: 'All fields are required' };
       }
 
-      // Validate name format (only first name, uppercase)
-      if (!/^[A-Za-z\s]+$/.test(fullName.trim())) {
-        return { error: 'Name should contain only letters and spaces' };
+      if (password.length < 6) {
+        return { error: 'Password must be at least 6 characters long' };
       }
 
-      const email = `${studentId}@batchboard.local`;
-      
+      if (!/^[A-Za-z0-9]{3,20}$/.test(studentId)) {
+        return { error: 'Student ID must be 3-20 characters (letters and numbers only)' };
+      }
+
+      if (!/^[A-Za-z\s]{2,50}$/.test(fullName.trim())) {
+        return { error: 'Name must be 2-50 characters (letters and spaces only)' };
+      }
+
+      // Check if student ID already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('student_id')
+        .eq('student_id', studentId)
+        .single();
+
+      if (existingProfile) {
+        return { error: 'Student ID already exists. Please choose a different one.' };
+      }
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(),
         password,
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation
+        }
       });
 
       if (error) {
+        if (error.message.includes('User already registered')) {
+          return { error: 'An account with this email already exists. Please sign in instead.' };
+        }
         return { error: error.message };
       }
 
       if (data.user) {
-        // Create profile
+        // Create profile immediately
         const { error: profileError } = await createProfile({
           user_id: data.user.id,
           student_id: studentId,
@@ -151,14 +168,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (profileError) {
           console.error('Error creating profile:', profileError);
+          return { error: 'Account created but profile setup failed. Please contact support.' };
         }
 
-        toast.success('Account created successfully!');
+        await fetchProfile(data.user.id);
+        toast.success('Account created successfully! Welcome to BatchBoard!');
       }
 
       return {};
     } catch (error) {
-      return { error: 'An unexpected error occurred' };
+      console.error('Signup error:', error);
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 
@@ -171,6 +191,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePassword = async (newPassword: string) => {
     try {
+      if (newPassword.length < 6) {
+        return { error: 'Password must be at least 6 characters long' };
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -184,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase
           .from('profiles')
           .update({ first_login: false })
-          .eq('user_id', user.id);
+          .eq('user_id', user?.id);
         
         await refreshProfile();
       }
